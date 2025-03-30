@@ -1,0 +1,8 @@
+
+services:
+  unstructured:
+    image: 'downloads.unstructured.io/unstructured-io/unstructured:latest'
+    tty: true
+    command: ["/bin/bash"]
+    volumes:
+      - ./:/app/data
