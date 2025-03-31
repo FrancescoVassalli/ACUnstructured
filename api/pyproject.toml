@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "ac_unstructure"
+version = "0.1.0"
+description = "process documents"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+fastapi = "~=0.100.0"
+pdfminer = "20191125"
+python-dotenv = "1.0.0"
+numpy = "~=2.2.4"
+starlette = "~=0.27.0"
+uvicorn = "~=0.23.2"
+wrapt = "~=1.17.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
