@@ -4,5 +4,7 @@ services:
     image: 'downloads.unstructured.io/unstructured-io/unstructured:latest'
     tty: true
     command: ["/bin/bash"]
+    ports:
+      - "8000:8000"
     volumes:
-      - ./:/app/data
+      - ./api:/app/api
