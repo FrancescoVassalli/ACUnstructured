@@ -19,7 +19,7 @@ class ExtractedElement(BaseModel):
     page_number: Optional[int] = None
     file_name: str
 
-@router.post("/extract/{name}")
+@router.post("/extract")
 async def extract(request: Request, name:str)->List[ExtractedElement]:
     elements = partition_pdf(name, include_page_breaks=True, infer_table_structure=True, strategy=PartitionStrategy.HI_RES)
     extracted_elements = [0]*len(elements)
