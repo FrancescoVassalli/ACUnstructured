@@ -3,7 +3,8 @@ from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.strategies import PartitionStrategy
 from pydantic import BaseModel
 import logging
-from typing import List, Optional
+import json
+from typing import List, Optional, Generator
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -18,6 +19,40 @@ class ExtractedElement(BaseModel):
     text: str
     page_number: Optional[int] = None
     file_name: str
+
+def is_next_element_same_page(element: ExtractedElement, next_element: ExtractedElement)->bool:
+    return (element.page_number is None or element.page_number == next_element.page_number) and (element.file_name is None or element.file_name == next_element.file_name)
+
+def generate_chunks(extracted_elements: List[ExtractedElement])->Generator[ExtractedElement, None, None]:
+    next_chunk = ExtractedElement(id="", is_html=False, text="", page_number=None, file_name="")
+    combined_chunk_ids = []
+    for element in extracted_elements:
+        if element.is_html:
+            yield element
+        elif element.page_number is None or element.text == '':
+            continue
+        elif is_next_element_same_page(next_chunk, element):
+            next_chunk.page_number = element.page_number
+            next_chunk.file_name = element.file_name
+            next_chunk.text += element.text+'\n'
+            combined_chunk_ids.append(element.id)
+        else:
+            next_chunk.id = str(hash(''.join(combined_chunk_ids)))
+            yield next_chunk
+            next_chunk = ExtractedElement(
+                id="", 
+                is_html=False, 
+                text=element.text+'\n', 
+                page_number=element.page_number, 
+                file_name=element.file_name
+            )
+            combined_chunk_ids = [element.id]
+    next_chunk.id = str(hash(''.join(combined_chunk_ids)))
+    yield next_chunk
+
+def save_chunks(chunks: List[ExtractedElement], file_path: str):
+    with open(f'{file_path}_chunks.json', 'w') as f:
+        json.dump(chunks,f)
 
 @router.post("/extract")
 async def extract(request: Request, name:str)->List[ExtractedElement]:
@@ -43,3 +78,9 @@ async def extract(request: Request, name:str)->List[ExtractedElement]:
 
     return extracted_elements
 
+@router.post("/extract-chunks")
+async def extract_chunks(request: Request, name:str)->List[ExtractedElement]:
+    extracted_elements = await extract(request, name)
+    chunked_elements = [chunk for chunk in generate_chunks(extracted_elements)]
+    save_chunks(chunked_elements, name)
+    return Response(status_code=200)
