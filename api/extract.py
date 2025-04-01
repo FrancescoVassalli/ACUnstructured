@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Response, BackgroundTasks
 from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.strategies import PartitionStrategy
 from pydantic import BaseModel
+from pydantic.json import pydantic_encoder
 import logging
 import json
 from typing import List, Optional, Generator
@@ -52,11 +53,11 @@ def generate_chunks(extracted_elements: List[ExtractedElement])->Generator[Extra
 
 def save_chunks(chunks: List[ExtractedElement], file_path: str):
     with open(f'{file_path}_chunks.json', 'w') as f:
-        json.dump(chunks,f)
+        json.dump(chunks,f,default=pydantic_encoder)
 
 def save_partition(elements: List[ExtractedElement], file_path: str):
     with open(f'{file_path}_partition.json', 'w') as f:
-        json.dump(elements,f)
+        json.dump(elements,f,default=pydantic_encoder)
 
 @router.post("/extract")
 async def extract(request: Request, name:str)->List[ExtractedElement]:
