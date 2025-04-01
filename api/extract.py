@@ -54,6 +54,10 @@ def save_chunks(chunks: List[ExtractedElement], file_path: str):
     with open(f'{file_path}_chunks.json', 'w') as f:
         json.dump(chunks,f)
 
+def save_partition(elements: List[ExtractedElement], file_path: str):
+    with open(f'{file_path}_partition.json', 'w') as f:
+        json.dump(elements,f)
+
 @router.post("/extract")
 async def extract(request: Request, name:str)->List[ExtractedElement]:
     elements = partition_pdf(name, include_page_breaks=True, infer_table_structure=True, strategy=PartitionStrategy.HI_RES)
@@ -85,5 +89,6 @@ async def extract_chunks(request: Request, name:str, background_tasks: Backgroun
 
 async def process_chunks(request: Request, name: str):
     extracted_elements = await extract(request, name)
+    save_partition(extracted_elements, name)
     chunked_elements = [chunk for chunk in generate_chunks(extracted_elements)]
     save_chunks(chunked_elements, name)
