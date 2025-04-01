@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Request, Response, BackgroundTasks
 from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.strategies import PartitionStrategy
 from pydantic import BaseModel
@@ -79,8 +79,11 @@ async def extract(request: Request, name:str)->List[ExtractedElement]:
     return extracted_elements
 
 @router.post("/extract-chunks")
-async def extract_chunks(request: Request, name:str)->List[ExtractedElement]:
+async def extract_chunks(request: Request, name:str, background_tasks: BackgroundTasks):
+    background_tasks.add_task(process_chunks, request, name)
+    return Response(status_code=200)
+
+async def process_chunks(request: Request, name: str):
     extracted_elements = await extract(request, name)
     chunked_elements = [chunk for chunk in generate_chunks(extracted_elements)]
     save_chunks(chunked_elements, name)
-    return Response(status_code=200)
